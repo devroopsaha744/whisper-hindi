@@ -8,10 +8,18 @@ This report captures the full fine-tuning and evaluation journey for adapting Op
 - Quantify improvements against the Hindi split of the FLEURS benchmark and highlight where the tuned model excels.
 
 ## Data Preparation Strategy
-- **Segment-level supervision:** `scripts/download_dataset.py` pulls full-call audio and structured transcripts. In `notebooks/training-pipeline.ipynb` we explode each transcription JSON into per-segment examples (text with `start`/`end` timestamps).
-- **Quality filters:** Segments longer than 30 seconds or labels exceeding 448 tokens are dropped before feature extraction. Empty or redacted transcriptions are skipped.
-- **Consistent sampling:** All audio is resampled to 16 kHz and clipped to the exact segment window using `librosa`. This keeps Whisper's log-mel features aligned with the segment text.
-- **Train/validation split:** 95% of the filtered segments feed the fine-tuning loop, with the remainder reserved for validation metrics during training.
+- **Dataset artifact:** The training notebook consumes the export produced by `scripts/download_dataset.py`. The export lives under `data/` (or `/kaggle/input/whisper-hindhi/data` when running on Kaggle) and must contain `download_results.csv` plus the downloaded `audio/` and `transcriptions/` folders.
+- **Segment explosion:** `load_downloaded_data` in `notebooks/training-pipeline.ipynb` keeps only rows where both `audio_success` and `transcription_success` are `True`, then parses each transcription JSON (handling both list and `{segments: [...]}` formats) into segment-level rows with `text`, `start`, and `end` timestamps.
+- **Data hygiene:** Segments marked `REDACTED`, empty strings, audio beyond 30 s, or tokenized labels longer than 448 tokens are removed before feature extraction. Errors while loading audio/transcripts gracefully skip the offending row.
+- **Feature extraction:** Each retained segment is sliced from the source audio with `librosa.load(..., offset=start_time, duration=end_time-start_time)` at 16 kHz so that Whisper receives aligned log-mel spectrograms.
+- **Deterministic split:** The resulting dataframe is split deterministically (first 95% for train, final 5% for validation) before converting to Hugging Face `Dataset` objects. No shuffling is applied so downstream repetitions remain reproducible.
+
+## Corpus Diagnostics
+- ![Word Count Distribution](analysis/word_count_distribution.png)
+	Long-form conversational turns dominate: mean 1,551 words per transcript with heavy-tailed density up to 3,648 words. These lengthy utterances reinforce the need for duration clipping in the training pipeline.
+- ![Character Count Distribution](analysis/char_count_distribution.png)
+	Character-level spread mirrors the word statistics (median ≈ 8.5k chars). Outliers north of 21k characters guided the 448-token label cap used during fine-tuning.
+- **Aggregate metrics:** `analysis/dataset_analysis.json` summarizes 104 audio/transcription pairs after filtering. These diagnostics validated that enough high-quality content remained for fine-tuning despite aggressive trimming and helped prioritize speakers with complete metadata.
 
 ## Fine-tuning Configuration
 - **Base model:** `openai/whisper-small`
