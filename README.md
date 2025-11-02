@@ -70,12 +70,12 @@ All four figures are generated from Hub-hosted CSVs and automatically uploaded a
 ### WER comparison (CSV snapshot)
 The exact CSV-format used for the authoritative WER snapshot is included below and saved in the repository at `results/wer_comparison.csv`.
 
-```csv
-"Values are raw WER ratios (e.g., 0.30 = 30%)",
-Model,Hindi
-"Whisper Small (Pretrained)",0.8464
-"FT Whisper Small",0.3820
-```
+| Model | WER (ratio) | WER (%) |
+|---|---:|---:|
+| Whisper Small (Pretrained) | 0.8464 | 84.64% |
+| FT Whisper Small | 0.3820 | 38.20% |
+
+The authoritative CSV is still available at `results/wer_comparison.csv`.
 
 Small results summary: the baseline (zero-shot) Whisper-small model produced a WER of 84.64% on the FLEURS Hindi test split, while the fine-tuned checkpoint (`datafreak/whisper-hindi`) achieves 38.20% — a relative reduction of ~54% in word error rate. See `results/detailed_predictions.csv` for per-utterance outputs and `graphs/` for the visual comparisons.
 
