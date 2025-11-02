@@ -2,6 +2,11 @@
 
 This report captures the full fine-tuning and evaluation journey for adapting OpenAI's Whisper-small model to conversational Hindi ASR. The focus is on the data-centric design choices, training configuration, evaluation workflow, and measurable gains over the baseline.
 
+Repository & quick links
+- GitHub (this repo): https://github.com/devroopsaha744/whisper-hindi/tree/main
+- Hugging Face model: https://huggingface.co/datafreak/whisper-hindi
+- Evaluation dataset & assets: https://huggingface.co/datasets/datafreak/whisper-hindi-eval-results
+
 ## Project Goals
 - Build a Hindi-specific ASR model by fine-tuning `openai/whisper-small` on curated speech segments.
 - Preserve reproducibility by scripting data preparation and sharing all artifacts (models, metrics, and visualizations) on Hugging Face.
